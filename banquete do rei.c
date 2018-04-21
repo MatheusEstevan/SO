@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <windows.h>
 
-int num_ref = 12;
+volatile int num_ref = 0;
 CRITICAL_SECTION cs;
-
+volatile int pratosServido = 0;
 //aux functions
 
 
@@ -40,7 +40,7 @@ void comer(int id){
 	//uniTempo
 	int r = rand();  
 	printf("convidado %d esta comendo \n",id);
-	sleep(randomNumber(2,5));
+	//sleep(randomNumber(2,5));
 }
 
 
@@ -52,8 +52,13 @@ void buscarRef(int id){
 		chamarCozinheiro();
 	}
 	else{
+		pratosServido++;
+	
 		printf("convidado %d esta se servindo \n",id);
-		Sync1();
+		printf("pratos servidos: %d \n", pratosServido);
+				//Sync1();
+		num_ref--;
+		
 		printf("%d\n", num_ref);
 	}
 }
@@ -69,7 +74,7 @@ DWORD WINAPI convidadoThread(int stopT,int id) {
 		  comer(id); 
 		}
 		else{
-			chamarCozinheiro(); 
+			cozinheiroWorker(); 
 		}
 	//}
 
@@ -99,6 +104,7 @@ void trocarTacho(){
 
 void avisarCorte(){
 	printf("Comida esta servida \n");
+	printf("voltando para cozinha\n");
 //	notifyAll(); 
 }
 void voltarCozinha(){
@@ -117,6 +123,11 @@ DWORD WINAPI cozinheiroThread(void* data) {
     return 0;
 }
 
+void cozinheiroWorker(){
+	   prepararComida();
+		trocarTacho();
+		avisarCorte();
+}
 //fim cozinheiro
 
 
@@ -126,22 +137,19 @@ DWORD WINAPI cozinheiroThread(void* data) {
 
 void main(){
 	
-	
-HANDLE thread;
-HANDLE thread2 ;
- HANDLE convidados[12];
+ 		HANDLE convidados[12];
 		int i = 0;
-		for(i; i < 12; i++){
+		cozinheiroWorker();
 		
-		 convidados[i] = _beginthread(convidadoThread(1,i), 0, NULL);
-		 
-		 
+		for(i; i < 12; i++){		
+		
+		 	convidados[i] = _beginthread(convidadoThread(1,i), 0, NULL);		 
 		}
-	      WaitForMultipleObjects(2, convidados, TRUE, INFINITE);
+	      WaitForMultipleObjects(12, convidados, TRUE, INFINITE);
 	
 	      //for (int ii = 0; ii <=1; ii++)
-	      CloseHandle (convidados[0]);
-	      CloseHandle (convidados[1]);
+	    //  CloseHandle (convidados[0]);
+	      
 	
 	
 	      DeleteCriticalSection(&cs);

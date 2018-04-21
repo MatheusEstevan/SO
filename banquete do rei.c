@@ -40,7 +40,7 @@ void comer(int id){
 	//uniTempo
 	int r = rand();  
 	printf("convidado %d esta comendo \n",id);
-	//sleep(randomNumber(2,5));
+	sleep(randomNumber(2,5));
 }
 
 
@@ -129,12 +129,14 @@ void main(){
 	
 HANDLE thread;
 HANDLE thread2 ;
- HANDLE convidados[2];
+ HANDLE convidados[12];
+		int i = 0;
+		for(i; i < 12; i++){
 		
-		 convidados[0] = CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)convidadoThread(1,1), NULL, 0, &thread);
-		 convidados[1] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)convidadoThread(1,2), NULL, 0, &thread2);
+		 convidados[i] = _beginthread(convidadoThread(1,i), 0, NULL);
 		 
-	
+		 
+		}
 	      WaitForMultipleObjects(2, convidados, TRUE, INFINITE);
 	
 	      //for (int ii = 0; ii <=1; ii++)

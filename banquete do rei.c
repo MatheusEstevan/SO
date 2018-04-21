@@ -8,6 +8,19 @@ CRITICAL_SECTION cs;
 
 //aux functions
 
+
+void Sync1()
+{
+ 
+   HANDLE l_hsProtect=CreateSemaphore(NULL,1,1,NULL);
+  //InterlockedIncrement((LPLONG)&num_ref);
+  //InterlockedDecrement(&num_ref);
+	  WaitForSingleObject(l_hsProtect,INFINITE);
+	  num_ref--;
+	  ReleaseSemaphore(l_hsProtect,1,NULL);
+ 
+}
+
 int randomNumber(int lower, int upper)
 {
     int num = (rand() + lower) % (upper + 1);
@@ -27,7 +40,7 @@ void comer(int id){
 	//uniTempo
 	int r = rand();  
 	printf("convidado %d esta comendo \n",id);
-	sleep(randomNumber(2,5));
+	//sleep(randomNumber(2,5));
 }
 
 
@@ -40,17 +53,16 @@ void buscarRef(int id){
 	}
 	else{
 		printf("convidado %d esta se servindo \n",id);
-	
-		EnterCriticalSection(&cs);	
-			num_ref--;
-		LeaveCriticalSection(&cs);
+		Sync1();
+		printf("%d\n", num_ref);
 	}
 }
 
-DWORD WINAPI convidadoThread(void* data, int stopT,int id) {
+DWORD WINAPI convidadoThread(int stopT,int id) {
   // Do stuff.  This will be the first function called on the new thread.
   // When this function returns, the thread goes away.  See MSDN for more details.
-  while(stopT==1){
+  //while(stopT == 1){
+  
 	    if(num_ref > 0){
 		 
 		  buscarRef(id);
@@ -59,7 +71,8 @@ DWORD WINAPI convidadoThread(void* data, int stopT,int id) {
 		else{
 			chamarCozinheiro(); 
 		}
-	}
+	//}
+
   
   return 0;
 }
@@ -103,6 +116,7 @@ DWORD WINAPI cozinheiroThread(void* data) {
 	voltarCozinha();
     return 0;
 }
+
 //fim cozinheiro
 
 
@@ -111,11 +125,23 @@ DWORD WINAPI cozinheiroThread(void* data) {
 //main
 
 void main(){
-
- HANDLE thread = CreateThread(NULL, 0, convidadoThread(num_ref,1,1), NULL, 0, NULL);
- HANDLE thread2 = CreateThread(NULL, 0, convidadoThread(num_ref,1,2), NULL, 0, NULL);
-
+	
+	
+HANDLE thread;
+HANDLE thread2 ;
+ HANDLE convidados[2];
+		
+		 convidados[0] = CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)convidadoThread(1,1), NULL, 0, &thread);
+		 convidados[1] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)convidadoThread(1,2), NULL, 0, &thread2);
+		 
+	
+	      WaitForMultipleObjects(2, convidados, TRUE, INFINITE);
+	
+	      //for (int ii = 0; ii <=1; ii++)
+	      CloseHandle (convidados[0]);
+	      CloseHandle (convidados[1]);
+	
+	
+	      DeleteCriticalSection(&cs);
 }
-
-
 
